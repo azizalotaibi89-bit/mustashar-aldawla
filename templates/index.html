@@ -751,8 +751,14 @@
                 });
 
                 if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error || 'حدث خطأ في الاتصال');
+                    let errorMsg = 'حدث خطأ في الاتصال';
+                    try {
+                        const err = await response.json();
+                        errorMsg = err.error || errorMsg;
+                    } catch (e) {
+                        errorMsg = `خطأ من السيرفر (${response.status})`;
+                    }
+                    throw new Error(errorMsg);
                 }
 
                 // Handle streaming response
@@ -794,7 +800,7 @@
             }
 
             isStreaming = false;
-            document.getElementById('sendBtn').disabled = !apiKey;
+            document.getElementById('sendBtn').disabled = !isConnected();
             scrollToBottom();
         }
 
