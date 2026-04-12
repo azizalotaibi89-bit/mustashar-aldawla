@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستشار الدولة — التشريعات الكويتية</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f1117;
+            --bg-secondary: #1a1b23;
+            --bg-tertiary: #24252e;
+            --bg-hover: #2d2e3a;
+            --text-primary: #e8e8ed;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --accent: #c8a84e;
+            --accent-light: #dbc06e;
+            --accent-dark: #a68a2e;
+            --border: #2d2e3a;
+            --user-bg: #1e3a5f;
+            --assistant-bg: transparent;
+            --error: #ef4444;
+            --success: #22c55e;
+            --scrollbar-bg: #1a1b23;
+            --scrollbar-thumb: #3a3b47;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Kufi Arabic', 'Noto Naskh Arabic', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4a4b57; }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon img {
+            width: 44px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .header-title h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+
+        .header-title span {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .settings-btn {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        /* Chat Area */
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            scroll-behavior: smooth;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .welcome-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .welcome-logo img {
+            width: 140px;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 24px rgba(200, 168, 78, 0.3));
+            margin-bottom: 14px;
+        }
+
+        .welcome-logo .logo-title-ar {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .welcome-logo .logo-title-en {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: 2px;
+        }
+
+        .welcome-logo .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .welcome-screen h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .welcome-screen p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            max-width: 500px;
+            line-height: 1.8;
+            margin-bottom: 32px;
+        }
+
+        .suggestions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .suggestion-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            text-align: right;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+            color: var(--text-secondary);
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .suggestion-card:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        /* Messages */
+        .message {
+            margin-bottom: 24px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-user {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .message-user .message-content {
+            background: var(--user-bg);
+            border-radius: 16px 16px 4px 16px;
+            padding: 12px 18px;
+            max-width: 75%;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+
+        .message-assistant {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .assistant-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .message-assistant .message-content {
+            flex: 1;
+            font-size: 15px;
+            line-height: 2;
+            color: var(--text-primary);
+        }
+
+        .message-assistant .message-content p {
+            margin-bottom: 12px;
+        }
+
+        .message-assistant .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-assistant .message-content strong {
+            color: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .message-assistant .message-content ul,
+        .message-assistant .message-content ol {
+            padding-right: 20px;
+            margin-bottom: 12px;
+        }
+
+        .message-assistant .message-content li {
+            margin-bottom: 6px;
+        }
+
+        .message-assistant .message-content code {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .message-assistant .message-content blockquote {
+            border-right: 3px solid var(--accent);
+            padding: 8px 16px;
+            margin: 12px 0;
+            background: var(--bg-secondary);
+            border-radius: 0 8px 8px 0;
+            color: var(--text-secondary);
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: typing 1.2s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* Input Area */
+        .input-area {
+            padding: 16px 24px 24px;
+            flex-shrink: 0;
+        }
+
+        .input-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            align-items: flex-end;
+            padding: 8px;
+            transition: border-color 0.2s;
+        }
+
+        .input-container:focus-within {
+            border-color: var(--accent);
+        }
+
+        #messageInput {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 15px;
+            padding: 8px 12px;
+            resize: none;
+            max-height: 150px;
+            min-height: 24px;
+            line-height: 1.6;
+            outline: none;
+        }
+
+        #messageInput::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            background: var(--accent);
+            border: none;
+            color: var(--bg-primary);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            background: var(--accent-light);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            transform: rotate(180deg);
+        }
+
+        .disclaimer {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        /* API Key Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 480px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .modal p {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        .modal-input {
+            width: 100%;
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            direction: ltr;
+            text-align: left;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .modal-input:focus {
+            border-color: var(--accent);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover { background: var(--accent-light); }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected { background: var(--success); }
+        .status-dot.disconnected { background: var(--error); }
+
+        /* Error message */
+        .error-msg {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .header { padding: 12px 16px; }
+            .chat-area { padding: 16px; }
+            .input-area { padding: 12px 16px 16px; }
+            .suggestions { grid-template-columns: 1fr; }
+            .welcome-screen h2 { font-size: 22px; }
+            .message-user .message-content { max-width: 90%; }
+            .modal { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-right">
+                <div class="logo-icon"><img src="/static/emblem_final.png" alt="شعار دولة الكويت"></div>
+                <div class="header-title">
+                    <h1>مستشار الدولة</h1>
+                    <span>التشريعات والقوانين الكويتية</span>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="api-status" id="apiStatus">
+                    <span class="status-dot disconnected" id="statusDot"></span>
+                    <span id="statusText">غير متصل</span>
+                </div>
+                <button class="settings-btn" onclick="openSettings()">الإعدادات</button>
+            </div>
+        </header>
+
+        <!-- Chat Area -->
+        <div class="chat-area" id="chatArea">
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-logo">
+                    <img src="/static/emblem_final.png" alt="شعار دولة الكويت">
+                    <div class="logo-title-ar">مجلس الوزراء</div>
+                    <div class="logo-title-en">Council of Ministers</div>
+                    <div class="logo-subtitle">State of Kuwait | دولة الكويت</div>
+                </div>
+                <h2>مستشار الدولة</h2>
+                <p>مساعدك القانوني الذكي للتشريعات والقوانين الكويتية. اسألني عن أي مادة قانونية أو حكم تشريعي وسأجاوبك بالتفصيل.</p>
+                <div class="suggestions">
+                    <button class="suggestion-card" onclick="askSuggestion(this)">ما هي شروط الترشح لعضوية مجلس الأمة؟</button>
+                    <button class="suggestion-card" onclick="askSuggestion(this)">ما هي حقوق المتهم في الدستور الكويتي؟</button>
+                    <button class="suggestion-card" onclick="askSuggestion(this)">ما هي صلاحيات الأمير في الدستور؟</button>
+                    <button class="suggestion-card" onclick="askSuggestion(this)">ما هو نص المادة 29 من الدستور؟</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="input-container">
+                <textarea id="messageInput" rows="1" placeholder="اسأل عن أي قانون أو تشريع كويتي..." onkeydown="handleKeyDown(event)" oninput="autoResize(this)"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+            <div class="disclaimer">
+                مساعد استرشادي للقوانين الكويتية — لا يُغني عن الاستشارة القانونية المتخصصة
+                <br>التشريعات محدثة حتى 4/11/2025 — إعداد المستشار جزاء العتيبي
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <h3>إعدادات مفتاح API</h3>
+            <p>أدخل مفتاح Anthropic API الخاص بك للتواصل مع Claude. يمكنك الحصول على مفتاح من <a href="https://console.anthropic.com" target="_blank" style="color: var(--accent);">console.anthropic.com</a></p>
+            <input type="password" class="modal-input" id="apiKeyInput" placeholder="sk-ant-api03-..." dir="ltr">
+            <div id="settingsError"></div>
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="saveApiKey()">حفظ</button>
+                <button class="btn-secondary" onclick="closeSettings()">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        // State
+        // ============================================================
+        let apiKey = localStorage.getItem('mustashar_api_key') || '';
+        let chatHistory = [];
+        let isStreaming = false;
+
+        // ============================================================
+        // Initialization
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            updateApiStatus();
+            if (!apiKey) {
+                setTimeout(openSettings, 500);
+            }
+            document.getElementById('messageInput').focus();
+        });
+
+        // ============================================================
+        // API Key Management
+        // ============================================================
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+            document.getElementById('apiKeyInput').value = apiKey;
+            document.getElementById('apiKeyInput').focus();
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').classList.remove('active');
+            document.getElementById('settingsError').innerHTML = '';
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            if (!key) {
+                document.getElementById('settingsError').innerHTML = '<div class="error-msg">الرجاء إدخال مفتاح API</div>';
+                return;
+            }
+            apiKey = key;
+            localStorage.setItem('mustashar_api_key', key);
+            updateApiStatus();
+            closeSettings();
+        }
+
+        function updateApiStatus() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (apiKey) {
+                dot.className = 'status-dot connected';
+                text.textContent = 'متصل';
+                sendBtn.disabled = false;
+            } else {
+                dot.className = 'status-dot disconnected';
+                text.textContent = 'غير متصل';
+                sendBtn.disabled = true;
+            }
+        }
+
+        // ============================================================
+        // Chat Functions
+        // ============================================================
+        function askSuggestion(el) {
+            if (!apiKey) {
+                openSettings();
+                return;
+            }
+            document.getElementById('messageInput').value = el.textContent;
+            sendMessage();
+        }
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message || isStreaming) return;
+
+            if (!apiKey) {
+                openSettings();
+                return;
+            }
+
+            // Hide welcome screen
+            const welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.style.display = 'none';
+
+            // Add user message
+            appendMessage('user', message);
+            chatHistory.push({ role: 'user', content: message });
+
+            // Clear input
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Add assistant message placeholder
+            const assistantEl = appendMessage('assistant', '');
+            const contentEl = assistantEl.querySelector('.message-content');
+
+            // Show typing indicator
+            contentEl.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+
+            isStreaming = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        history: chatHistory.slice(0, -1),
+                        api_key: apiKey
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'حدث خطأ في الاتصال');
+                }
+
+                // Handle streaming response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = '';
+                contentEl.innerHTML = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = line.slice(6);
+                            if (data === '[DONE]') continue;
+
+                            try {
+                                const parsed = JSON.parse(data);
+                                if (parsed.text) {
+                                    fullText += parsed.text;
+                                    contentEl.innerHTML = formatMarkdown(fullText);
+                                    scrollToBottom();
+                                }
+                            } catch (e) {
+                                // Skip invalid JSON
+                            }
+                        }
+                    }
+                }
+
+                chatHistory.push({ role: 'assistant', content: fullText });
+
+            } catch (error) {
+                contentEl.innerHTML = `<div class="error-msg">${error.message}</div>`;
+            }
+
+            isStreaming = false;
+            document.getElementById('sendBtn').disabled = !apiKey;
+            scrollToBottom();
+        }
+
+        function appendMessage(role, content) {
+            const chatArea = document.getElementById('chatArea');
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message message-${role}`;
+
+            if (role === 'user') {
+                msgDiv.innerHTML = `<div class="message-content">${escapeHtml(content)}</div>`;
+            } else {
+                msgDiv.innerHTML = `
+                    <div class="assistant-avatar"><img src="/static/emblem_final.png" alt="" style="width:20px;height:auto;"></div>
+                    <div class="message-content">${content ? formatMarkdown(content) : ''}</div>
+                `;
+            }
+
+            chatArea.appendChild(msgDiv);
+            scrollToBottom();
+            return msgDiv;
+        }
+
+        function scrollToBottom() {
+            const chatArea = document.getElementById('chatArea');
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        // ============================================================
+        // Markdown Formatting
+        // ============================================================
+        function formatMarkdown(text) {
+            // Escape HTML first
+            let html = escapeHtml(text);
+
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+            // Italic
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+
+            // Blockquotes
+            html = html.replace(/^&gt;\s?(.+)$/gm, '<blockquote>$1</blockquote>');
+
+            // Numbered lists
+            html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ol>$&</ol>');
+
+            // Bullet lists
+            html = html.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
+
+            // Inline code
+            html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+
+            // Paragraphs
+            html = html.split('\n\n').map(p => {
+                p = p.trim();
+                if (!p) return '';
+                if (p.startsWith('<ol>') || p.startsWith('<ul>') || p.startsWith('<blockquote>') || p.startsWith('<li>')) return p;
+                return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+            }).join('');
+
+            return html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
