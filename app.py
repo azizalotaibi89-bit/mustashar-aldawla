@@ -106,6 +106,12 @@ def search_chunks(query, top_k=MAX_CONTEXT_CHUNKS):
 def index():
     return render_template("index.html")
 
+@app.route("/api/status")
+def status():
+    """Check if server has an API key configured."""
+    has_key = bool(ANTHROPIC_API_KEY)
+    return jsonify({"has_server_key": has_key})
+
 @app.route("/api/chat", methods=["POST"])
 def chat():
     data = request.json

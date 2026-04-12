@@ -615,15 +615,23 @@
         // State
         // ============================================================
         let apiKey = localStorage.getItem('mustashar_api_key') || '';
+        let hasServerKey = false;
         let chatHistory = [];
         let isStreaming = false;
 
         // ============================================================
         // Initialization
         // ============================================================
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if server has its own API key
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                hasServerKey = data.has_server_key || false;
+            } catch(e) { hasServerKey = false; }
+
             updateApiStatus();
-            if (!apiKey) {
+            if (!apiKey && !hasServerKey) {
                 setTimeout(openSettings, 500);
             }
             document.getElementById('messageInput').focus();
@@ -655,12 +663,16 @@
             closeSettings();
         }
 
+        function isConnected() {
+            return !!(apiKey || hasServerKey);
+        }
+
         function updateApiStatus() {
             const dot = document.getElementById('statusDot');
             const text = document.getElementById('statusText');
             const sendBtn = document.getElementById('sendBtn');
 
-            if (apiKey) {
+            if (isConnected()) {
                 dot.className = 'status-dot connected';
                 text.textContent = 'متصل';
                 sendBtn.disabled = false;
@@ -675,7 +687,7 @@
         // Chat Functions
         // ============================================================
         function askSuggestion(el) {
-            if (!apiKey) {
+            if (!isConnected()) {
                 openSettings();
                 return;
             }
@@ -700,7 +712,7 @@
             const message = input.value.trim();
             if (!message || isStreaming) return;
 
-            if (!apiKey) {
+            if (!isConnected()) {
                 openSettings();
                 return;
             }
