@@ -786,8 +786,12 @@
                                     contentEl.innerHTML = formatMarkdown(fullText);
                                     scrollToBottom();
                                 }
+                                if (parsed.error) {
+                                    contentEl.innerHTML += `<div class="error-msg">${parsed.error}</div>`;
+                                    scrollToBottom();
+                                }
                             } catch (e) {
-                                // Skip invalid JSON
+                                // Skip invalid chunks (HTML errors etc)
                             }
                         }
                     }

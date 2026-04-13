@@ -244,17 +244,25 @@ def chat():
         client = anthropic.Anthropic(api_key=api_key)
 
         def generate():
-            with client.messages.stream(
-                model=MODEL,
-                max_tokens=4096,
-                system=system_prompt,
-                messages=messages
-            ) as stream:
-                for text in stream.text_stream:
-                    yield f"data: {json.dumps({'text': text}, ensure_ascii=False)}\n\n"
+            try:
+                with client.messages.stream(
+                    model=MODEL,
+                    max_tokens=4096,
+                    system=system_prompt,
+                    messages=messages
+                ) as stream:
+                    for text in stream.text_stream:
+                        yield f"data: {json.dumps({'text': text}, ensure_ascii=False)}\n\n"
+            except anthropic.AuthenticationError:
+                yield f"data: {json.dumps({'error': 'مفتاح API غير صحيح'}, ensure_ascii=False)}\n\n"
+            except anthropic.RateLimitError:
+                yield f"data: {json.dumps({'error': 'تم تجاوز حد الاستخدام. حاول لاحقاً'}, ensure_ascii=False)}\n\n"
+            except Exception as e:
+                yield f"data: {json.dumps({'error': f'حدث خطأ: {str(e)}'}, ensure_ascii=False)}\n\n"
             yield "data: [DONE]\n\n"
 
-        return Response(generate(), mimetype="text/event-stream")
+        return Response(generate(), mimetype="text/event-stream",
+                       headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
     except anthropic.AuthenticationError:
         return jsonify({"error": "مفتاح API غير صحيح. الرجاء التحقق من المفتاح."}), 401
