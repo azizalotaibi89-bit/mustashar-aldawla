@@ -39,6 +39,34 @@
             color: var(--text-primary);
             height: 100vh;
             overflow: hidden;
+            position: relative;
+        }
+
+        /* Background image layer */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url('/static/background.jpg');
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+            /* Dark overlay so the vintage building is visible but doesn't hurt readability */
+            filter: brightness(0.45) sepia(0.15);
+            z-index: -1;
+        }
+
+        /* Make containers slightly translucent so the background shows through subtly
+           while keeping text readable. */
+        .header {
+            background: rgba(15, 17, 23, 0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .input-area {
+            background: rgba(15, 17, 23, 0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         /* Scrollbar */
@@ -193,7 +221,7 @@
         }
 
         .suggestion-card {
-            background: var(--bg-secondary);
+            background: rgba(26, 27, 35, 0.70);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 14px 16px;
@@ -204,10 +232,12 @@
             color: var(--text-secondary);
             font-size: 13px;
             line-height: 1.6;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
         }
 
         .suggestion-card:hover {
-            background: var(--bg-tertiary);
+            background: rgba(36, 37, 46, 0.85);
             border-color: var(--accent);
             color: var(--text-primary);
         }
@@ -332,13 +362,15 @@
         }
 
         .input-container {
-            background: var(--bg-secondary);
+            background: rgba(26, 27, 35, 0.80);
             border: 1px solid var(--border);
             border-radius: 16px;
             display: flex;
             align-items: flex-end;
             padding: 8px;
             transition: border-color 0.2s;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .input-container:focus-within {
@@ -635,6 +667,14 @@
                 setTimeout(openSettings, 500);
             }
             document.getElementById('messageInput').focus();
+
+            // Close modal on ESC or backdrop click
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeSettings();
+            });
+            document.getElementById('settingsModal').addEventListener('click', (e) => {
+                if (e.target.id === 'settingsModal') closeSettings();
+            });
         });
 
         // ============================================================
@@ -691,7 +731,9 @@
                 openSettings();
                 return;
             }
-            document.getElementById('messageInput').value = el.textContent;
+            const input = document.getElementById('messageInput');
+            input.value = el.textContent;
+            autoResize(input);
             sendMessage();
         }
 
@@ -761,21 +803,27 @@
                     throw new Error(errorMsg);
                 }
 
-                // Handle streaming response
+                // Handle streaming response — buffer across chunks so split events parse cleanly
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let fullText = '';
+                let buffer = '';
                 contentEl.innerHTML = '';
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
 
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
+                    buffer += decoder.decode(value, { stream: true });
 
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
+                    // SSE events are separated by a blank line (\n\n). Process complete events only.
+                    let sepIdx;
+                    while ((sepIdx = buffer.indexOf('\n\n')) !== -1) {
+                        const event = buffer.slice(0, sepIdx);
+                        buffer = buffer.slice(sepIdx + 2);
+
+                        for (const line of event.split('\n')) {
+                            if (!line.startsWith('data: ')) continue;
                             const data = line.slice(6);
                             if (data === '[DONE]') continue;
 
@@ -787,11 +835,11 @@
                                     scrollToBottom();
                                 }
                                 if (parsed.error) {
-                                    contentEl.innerHTML += `<div class="error-msg">${parsed.error}</div>`;
+                                    contentEl.innerHTML += `<div class="error-msg">${escapeHtml(parsed.error)}</div>`;
                                     scrollToBottom();
                                 }
                             } catch (e) {
-                                // Skip invalid chunks (HTML errors etc)
+                                console.warn('Failed to parse SSE event:', data, e);
                             }
                         }
                     }
@@ -840,34 +888,78 @@
             // Escape HTML first
             let html = escapeHtml(text);
 
-            // Bold
+            // Inline formatting (applied before block-level parsing)
             html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-
-            // Italic
             html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-
-            // Blockquotes
-            html = html.replace(/^&gt;\s?(.+)$/gm, '<blockquote>$1</blockquote>');
-
-            // Numbered lists
-            html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-            html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ol>$&</ol>');
-
-            // Bullet lists
-            html = html.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
-
-            // Inline code
             html = html.replace(/`(.+?)`/g, '<code>$1</code>');
 
-            // Paragraphs
-            html = html.split('\n\n').map(p => {
-                p = p.trim();
-                if (!p) return '';
-                if (p.startsWith('<ol>') || p.startsWith('<ul>') || p.startsWith('<blockquote>') || p.startsWith('<li>')) return p;
-                return `<p>${p.replace(/\n/g, '<br>')}</p>`;
-            }).join('');
+            // Parse line-by-line so numbered vs. bulleted lists don't collide
+            const lines = html.split('\n');
+            const out = [];
+            let listType = null;      // 'ol' | 'ul' | null
+            let paragraph = [];
+            let inBlockquote = false;
 
-            return html;
+            const flushParagraph = () => {
+                if (paragraph.length) {
+                    out.push('<p>' + paragraph.join('<br>') + '</p>');
+                    paragraph = [];
+                }
+            };
+            const closeList = () => {
+                if (listType) {
+                    out.push('</' + listType + '>');
+                    listType = null;
+                }
+            };
+            const closeBlockquote = () => {
+                if (inBlockquote) {
+                    out.push('</blockquote>');
+                    inBlockquote = false;
+                }
+            };
+
+            for (let raw of lines) {
+                const line = raw.trimEnd();
+                const trimmed = line.trim();
+
+                if (trimmed === '') {
+                    flushParagraph();
+                    closeList();
+                    closeBlockquote();
+                    continue;
+                }
+
+                const numberedMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+                const bulletMatch = trimmed.match(/^[-•]\s+(.+)$/);
+                const quoteMatch = trimmed.match(/^&gt;\s?(.*)$/);
+
+                if (numberedMatch) {
+                    flushParagraph();
+                    closeBlockquote();
+                    if (listType !== 'ol') { closeList(); out.push('<ol>'); listType = 'ol'; }
+                    out.push('<li>' + numberedMatch[1] + '</li>');
+                } else if (bulletMatch) {
+                    flushParagraph();
+                    closeBlockquote();
+                    if (listType !== 'ul') { closeList(); out.push('<ul>'); listType = 'ul'; }
+                    out.push('<li>' + bulletMatch[1] + '</li>');
+                } else if (quoteMatch) {
+                    flushParagraph();
+                    closeList();
+                    if (!inBlockquote) { out.push('<blockquote>'); inBlockquote = true; }
+                    out.push(quoteMatch[1] + '<br>');
+                } else {
+                    closeList();
+                    closeBlockquote();
+                    paragraph.push(trimmed);
+                }
+            }
+            flushParagraph();
+            closeList();
+            closeBlockquote();
+
+            return out.join('');
         }
 
         function escapeHtml(text) {
